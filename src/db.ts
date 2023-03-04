@@ -9,6 +9,7 @@ import { FIRST_COOLDOWN, NEXT_COOLDOWN } from "../config";
 require('dotenv').config("../.env");
 const DB_CONNECTION = process.env.DB_CONNECTION;
 let endTimer: NodeJS.Timeout;
+let newTimer: NodeJS.Timeout;
 
 export const init = () => {
   if (DB_CONNECTION === undefined) return;
@@ -37,7 +38,11 @@ export const getLastPda = async () => {
       }
     }
   } catch (error) {
-    console.error('error')
+    console.log('error in getLastPda');
+    return {
+      pda: "",
+      endTime: -1 
+    }
   }
 
 }
@@ -47,7 +52,7 @@ export const getLastMessage = async () => {
     const item = await msgModel.find().sort({ _id: -1 }).limit(50);
     return item;
   } catch (error) {
-    console.error('error!')
+    console.log('error in getLastMessage!');
   }
 }
 export const addMessage = async (
@@ -68,7 +73,7 @@ export const addMessage = async (
       console.log(newData, "Saved Successful");
     })
   } catch (error) {
-    console.error('error!')
+    console.log('error in add message!')
   }
 
 }
@@ -98,7 +103,7 @@ export const createGame = async (
 
     io.emit("startGame", gamePool, 0, lresult);
   } catch (error) {
-    console.error('error!')
+    console.log('error in createGame!');
   }
 }
 
@@ -119,15 +124,16 @@ export const enterGame = async (
     } else {
       last_ts = item[0].end_timestamp + NEXT_COOLDOWN;
     }
+
     if (fresult.length === 1 && signer === fresult[0].player) {
       last_ts = 0
     } 
-    console.log("Get Last Timestamp", last_ts);
 
     const update = {
       end_timestamp: last_ts,
       entrants: 2
     }
+
     if (!(fresult.length === 1 && signer === fresult[0].player)) {
       await gameModel.findOneAndUpdate(filter, update, {
         new: true
@@ -136,24 +142,29 @@ export const enterGame = async (
     }
 
     if (last_ts != 0) {
-      console.log("LastTimestamp is cleared")
       clearTimeout(endTimer);
+      clearTimeout(newTimer);
+
       let timer = setTimeout(async () => {
         console.log("Claim Reward")
-
         await claimReward(new PublicKey(gamePool), io)
       }, last_ts - new Date().getTime());
+
+      let timerNew = setTimeout(async () => {
+        console.log("New GAME DATA")
+        io.emit("newGameReady", 0 , [])
+      }, last_ts - new Date().getTime() + 6000);
+
+      newTimer = timerNew;
       endTimer = timer;
-      console.log("--------LastTimestamp is set,", last_ts);
 
-      const lresult = await getResult(new PublicKey(gamePool));
-      console.log("========LastTimestamp is cleared", last_ts)
-
-      io.emit("endTimeUpdated", gamePool, last_ts, lresult);
     }
+    const lresult = await getResult(new PublicKey(gamePool));
+
+    io.emit("endTimeUpdated", gamePool, last_ts, lresult);
 
 
   } catch (error) {
-    console.error('error!')
+    console.log('error in enterGame!')
   }
 }
