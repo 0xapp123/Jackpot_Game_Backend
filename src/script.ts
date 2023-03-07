@@ -1,7 +1,7 @@
 
 import * as anchor from '@project-serum/anchor';
 import { Program, Wallet, web3 } from '@project-serum/anchor';
-import { addMessage, enterGame, getLastPda, init } from './db';
+import { addMessage, enterGame, getLastMessage, getLastPda, init } from './db';
 import {
     Connection,
     PartiallyDecodedInstruction,
@@ -52,14 +52,25 @@ export const getLastPdaIx = async (
     }
 }
 
+export const getLastMsgIx = async (
+) => {
+    try {
+        init();
+        const result = await getLastMessage();
+        return result;
+    } catch (e) {
+        console.log(e, " : error from add Msg")
+        return false;
+    }
+}
 export const addMessageIx = async (
     user_name: string,
     msg: string
 ) => {
     try {
         init();
-        await addMessage(user_name, msg);
-        return true;
+        const result = await addMessage(user_name, msg);
+        return result;
     } catch (e) {
         console.log(e, " : error from add Msg")
         return false;

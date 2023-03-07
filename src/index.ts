@@ -7,7 +7,8 @@ import {
   PublicKey
 } from '@solana/web3.js';
 import { Server } from 'socket.io';
-import { addMessageIx, getDataFromSignature, getLastPdaIx, getResult, performTx } from './script';
+import { addMessageIx,  getLastMsgIx,  getLastPdaIx, getResult, performTx } from './script';
+import { getLastMessage } from './db';
 
 
 export const SOLANA_NETWORK = "https://delicate-withered-theorem.solana-devnet.quiknode.pro/0399d35b8b5de1ba358bd014f584ba88d7709bcf/";
@@ -38,14 +39,39 @@ app.post('/writeMessage', async (req, res) => {
     let user = req.body.user as string;
     let msg = req.body.msg as string;
 
-
-    let result = await addMessageIx(user, msg);
-
+    let conq;
+    const ts = new Date().getTime();
+    let result = await getLastMsgIx();
+    if (!result) result = [];
+    let midResult = await addMessageIx(user, msg);
+    let newMsg;
+    if (!midResult){
+      newMsg = {
+        user_name:user,
+        message: msg,
+        timestamp: ts,
+      };
+    }
+    conq = [newMsg??newMsg, ...result];
 
     // send data with socket
-    io.emit("chatUpdated", result);
+    io.emit("chatUpdated", conq);
 
-    res.send(JSON.stringify(result ? 0 : -200));
+    res.send(JSON.stringify(conq ? conq : -200));
+    return
+
+  } catch (e) {
+    console.log(e, ">> error occured from receiving deposit request");
+    res.send(JSON.stringify(-1));
+    return
+  }
+})
+
+app.get('/getMessage', async (req, res) => {
+  try {
+    let result = await getLastMsgIx();
+
+    res.send(JSON.stringify(result ? result : -200));
     return
 
   } catch (e) {
