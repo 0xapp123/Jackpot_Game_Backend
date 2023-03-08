@@ -22,6 +22,7 @@ const config_1 = require("../config");
 require('dotenv').config("../.env");
 const DB_CONNECTION = process.env.DB_CONNECTION;
 let endTimer;
+let newTimer;
 const init = () => {
     if (DB_CONNECTION === undefined)
         return;
@@ -38,13 +39,25 @@ exports.init = init;
 const getLastPda = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const item = yield game_pool_1.gameModel.find().sort({ _id: -1 });
-        return {
-            pda: item[0].game_pool,
-            endTime: item[0].end_timestamp
-        };
+        if (new Date().getTime() >= item[0].end_timestamp) {
+            return {
+                pda: "",
+                endTime: -1
+            };
+        }
+        else {
+            return {
+                pda: item[0].game_pool,
+                endTime: item[0].end_timestamp
+            };
+        }
     }
     catch (error) {
-        console.error('error');
+        console.log('error in getLastPda');
+        return {
+            pda: "",
+            endTime: -1
+        };
     }
 });
 exports.getLastPda = getLastPda;
@@ -54,7 +67,7 @@ const getLastMessage = () => __awaiter(void 0, void 0, void 0, function* () {
         return item;
     }
     catch (error) {
-        console.error('error!');
+        console.log('error in getLastMessage!');
     }
 });
 exports.getLastMessage = getLastMessage;
@@ -73,7 +86,7 @@ const addMessage = (user_name, msg) => __awaiter(void 0, void 0, void 0, functio
         });
     }
     catch (error) {
-        console.error('error!');
+        console.log('error in add message!');
     }
 });
 exports.addMessage = addMessage;
@@ -93,43 +106,60 @@ const createGame = (startTimestamp, gamePool, io) => __awaiter(void 0, void 0, v
             start_ts: startTimestamp,
             game_pool: gamePool
         };
-        io.emit("startGame", gameData);
+        const lresult = yield (0, script_1.getResult)(new web3_js_1.PublicKey(gamePool));
+        io.emit("startGame", gamePool, 0, lresult);
     }
     catch (error) {
-        console.error('error!');
+        console.log('error in createGame!');
     }
 });
 exports.createGame = createGame;
-const enterGame = (gamePool, io) => __awaiter(void 0, void 0, void 0, function* () {
+const enterGame = (signer, gamePool, io) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const ts = new Date();
         const filter = { game_pool: gamePool };
+        const fresult = yield (0, script_1.getResult)(new web3_js_1.PublicKey(gamePool));
         const item = yield game_pool_1.gameModel.find(filter);
         let last_ts = 0;
+        console.log("Get Last Timestamp ++++++");
         if (item[0].entrants == 1) {
             last_ts = ts.getTime() + config_1.FIRST_COOLDOWN;
         }
         else {
             last_ts = item[0].end_timestamp + config_1.NEXT_COOLDOWN;
         }
+        if (fresult.length === 1 && signer === fresult[0].player) {
+            last_ts = 0;
+        }
         const update = {
             end_timestamp: last_ts,
             entrants: 2
         };
-        yield game_pool_1.gameModel.findOneAndUpdate(filter, update, {
-            new: true
-        });
+        if (!(fresult.length === 1 && signer === fresult[0].player)) {
+            yield game_pool_1.gameModel.findOneAndUpdate(filter, update, {
+                new: true
+            });
+            console.log("Write data on DB");
+        }
         if (last_ts != 0) {
             clearTimeout(endTimer);
-            let timer = setTimeout(() => {
-                (0, script_1.claimReward)(new web3_js_1.PublicKey(gamePool));
-            }, last_ts - new Date().getTime());
+            clearTimeout(newTimer);
+            let timer = setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
+                console.log("Claim Reward");
+                yield (0, script_1.claimReward)(new web3_js_1.PublicKey(gamePool), io);
+            }), last_ts - new Date().getTime());
+            let timerNew = setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
+                console.log("New GAME DATA");
+                io.emit("newGameReady", 0, []);
+            }), last_ts - new Date().getTime() + 6000);
+            newTimer = timerNew;
             endTimer = timer;
-            io.emit("endTimeUpdated", last_ts);
         }
+        const lresult = yield (0, script_1.getResult)(new web3_js_1.PublicKey(gamePool));
+        io.emit("endTimeUpdated", gamePool, last_ts, lresult);
     }
     catch (error) {
-        console.error('error!');
+        console.log('error in enterGame!');
     }
 });
 exports.enterGame = enterGame;
