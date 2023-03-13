@@ -47,6 +47,31 @@ export type Jackpot = {
           "isSigner": false
         },
         {
+          "name": "codyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bet3Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "jerzyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "experWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "teamWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -83,6 +108,31 @@ export type Jackpot = {
         },
         {
           "name": "solVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "codyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bet3Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "jerzyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "experWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "teamWallet",
           "isMut": true,
           "isSigner": false
         },
@@ -246,6 +296,31 @@ export const IDL: Jackpot = {
           "isSigner": false
         },
         {
+          "name": "codyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bet3Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "jerzyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "experWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "teamWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -282,6 +357,31 @@ export const IDL: Jackpot = {
         },
         {
           "name": "solVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "codyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bet3Wallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "jerzyWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "experWallet",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "teamWallet",
           "isMut": true,
           "isSigner": false
         },

@@ -21,6 +21,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+let counter = 0;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -30,8 +31,14 @@ const io = new Server(server, {
 });
 
 io.on('connection', async (socket) => {
-  console.log("New Connection Established");
-
+  console.log("New Connection Established,ADD SOCKET");
+  counter ++;
+  io.emit("connectionUpdated", counter);
+  socket.on('disconnect', async (socket) => {
+    console.log("New Connection Established, REMOVE COUTNER__");
+    counter --;
+    io.emit("connectionUpdated", counter);
+  })
 })
 
 app.post('/writeMessage', async (req, res) => {

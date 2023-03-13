@@ -22,12 +22,13 @@ const socket_io_1 = require("socket.io");
 const script_1 = require("./script");
 exports.SOLANA_NETWORK = "https://delicate-withered-theorem.solana-devnet.quiknode.pro/0399d35b8b5de1ba358bd014f584ba88d7709bcf/";
 exports.solConnection = new web3_js_1.Connection(exports.SOLANA_NETWORK, "confirmed");
-exports.PROGRAM_ID = "D7gqVkb2mTcEsoCDUB9ZjFA6Z5uN2MmwahwRRWjFgR3G";
+exports.PROGRAM_ID = "E13jNxzoQbUuyaZ9rYJUdRAirYZKU75NJNRV9CHdDhHE";
 const app = (0, express_1.default)();
 const port = process.env.PORT || 3002;
 app.use((0, cors_1.default)());
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: true }));
+let counter = 0;
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {
@@ -36,16 +37,49 @@ const io = new socket_io_1.Server(server, {
     }
 });
 io.on('connection', (socket) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("New Connection Established");
+    console.log("New Connection Established,ADD SOCKET");
+    counter++;
+    io.emit("connectionUpdated", counter);
+    socket.on('disconnect', (socket) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log("New Connection Established, REMOVE COUTNER__");
+        counter--;
+        io.emit("connectionUpdated", counter);
+    }));
 }));
 app.post('/writeMessage', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         let user = req.body.user;
         let msg = req.body.msg;
-        let result = yield (0, script_1.addMessageIx)(user, msg);
+        let conq;
+        const ts = new Date().getTime();
+        let result = yield (0, script_1.getLastMsgIx)();
+        if (!result)
+            result = [];
+        let midResult = yield (0, script_1.addMessageIx)(user, msg);
+        let newMsg;
+        if (!midResult) {
+            newMsg = {
+                user_name: user,
+                message: msg,
+                timestamp: ts,
+            };
+        }
+        conq = [newMsg !== null && newMsg !== void 0 ? newMsg : newMsg, ...result];
         // send data with socket
-        io.emit("chatUpdated", result);
-        res.send(JSON.stringify(result ? 0 : -200));
+        io.emit("chatUpdated", conq);
+        res.send(JSON.stringify(conq ? conq : -200));
+        return;
+    }
+    catch (e) {
+        console.log(e, ">> error occured from receiving deposit request");
+        res.send(JSON.stringify(-1));
+        return;
+    }
+}));
+app.get('/getMessage', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let result = yield (0, script_1.getLastMsgIx)();
+        res.send(JSON.stringify(result ? result : -200));
         return;
     }
     catch (e) {
@@ -88,14 +122,21 @@ app.post('/enterGame', (req, res) => __awaiter(void 0, void 0, void 0, function*
         return;
     }
 }));
-app.post('/getRecentGame', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+app.get('/getRecentGame', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const pdaData = yield (0, script_1.getLastPdaIx)();
         if (!pdaData)
             return;
         const pdaAddress = pdaData.pda;
-        const gameData = yield (0, script_1.getResult)(new web3_js_1.PublicKey(pdaAddress));
-        const result = Object.assign(Object.assign({}, pdaData), gameData);
+        let gameData;
+        if (pdaData.pda != "") {
+            gameData = yield (0, script_1.getResult)(new web3_js_1.PublicKey(pdaAddress));
+        }
+        const result = {
+            pda: pdaData.pda,
+            endTimestamp: pdaData.endTime ? pdaData.endTime : 0,
+            players: gameData
+        };
         res.send(JSON.stringify(result ? result : -200));
     }
     catch (e) {

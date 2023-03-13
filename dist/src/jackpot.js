@@ -50,6 +50,31 @@ exports.IDL = {
                     "isSigner": false
                 },
                 {
+                    "name": "codyWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "bet3Wallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "jerzyWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "experWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "teamWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
                     "name": "systemProgram",
                     "isMut": false,
                     "isSigner": false
@@ -86,6 +111,31 @@ exports.IDL = {
                 },
                 {
                     "name": "solVault",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "codyWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "bet3Wallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "jerzyWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "experWallet",
+                    "isMut": true,
+                    "isSigner": false
+                },
+                {
+                    "name": "teamWallet",
                     "isMut": true,
                     "isSigner": false
                 },
