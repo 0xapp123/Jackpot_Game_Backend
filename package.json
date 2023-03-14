@@ -6,6 +6,7 @@
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "build": "rm -rf ./dist && tsc",
     "ts-node": "ts-node",
     "postinstall": "tsc",
     "watch-node": "nodemon dist/index.js",
