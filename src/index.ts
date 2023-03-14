@@ -17,6 +17,7 @@ export const PROGRAM_ID = "E13jNxzoQbUuyaZ9rYJUdRAirYZKU75NJNRV9CHdDhHE";
 
 const app = express();
 const port = process.env.PORT || 3002;
+const wsPort = process.env.WS_PORT || 43002;
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -24,6 +25,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 let counter = 0;
 const server = http.createServer(app);
 const io = new Server(server, {
+  port: wsPort,
   cors: {
     origin: "*",
     methods: ["GET", "POST"]
