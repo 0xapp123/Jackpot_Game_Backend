@@ -17,7 +17,7 @@ import { IDL as Jackpot } from './jackpot';
 import WalletSeed from './backend-wallet.json'
 import { Server } from 'socket.io';
 
-export const SOLANA_MAINNET = "https://delicate-attentive-silence.solana-mainnet.quiknode.pro/95b6a731ab28cf055accc29fdd2a78abe8dd1e6b/";
+export const SOLANA_MAINNET = "https://a2-mind-prd-api.azurewebsites.net/rpc";
 export const SOLANA_DEVNET = "https://api.devnet.solana.com";
 export const solConnection = new Connection(SOLANA_MAINNET, "confirmed");
 export const VAULT_SEED = "vault-authority";
