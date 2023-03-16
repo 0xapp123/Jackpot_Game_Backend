@@ -1,2 +1,2 @@
-export const FIRST_COOLDOWN = 60000;
-export const NEXT_COOLDOWN = 20000;
+export const FIRST_COOLDOWN = 30000;
+export const NEXT_COOLDOWN = 10000;
