@@ -22,6 +22,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 let counter = 0;
+let betCounter = 0;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -127,6 +128,7 @@ app.post('/createGame', async (req, res) => {
       res.send(JSON.stringify(-100))
       return
     }
+    betCounter++;
 
     const result = await performTx(txId, io);
     res.send(JSON.stringify(result ? 0 : -200));
@@ -149,9 +151,23 @@ app.post('/enterGame', async (req, res) => {
       res.send(JSON.stringify(-100))
       return
     }
+    betCounter++;
     const result = await performTx(txId, io);
     res.send(JSON.stringify(result ? 0 : -200));
 
+  } catch (e) {
+    console.log(e, ">>> Error");
+    res.send(JSON.stringify(-2));
+    return
+  }
+})
+
+
+app.get('/getBetCount', async (req, res) => {
+  try {
+    const result = betCounter;
+
+    res.send(JSON.stringify(result ? result : 0));
   } catch (e) {
     console.log(e, ">>> Error");
     res.send(JSON.stringify(-2));
