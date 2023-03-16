@@ -1,7 +1,7 @@
 
 import * as anchor from '@project-serum/anchor';
 import { Program, Wallet, web3 } from '@project-serum/anchor';
-import { addMessage, enterGame, getLastMessage, getLastPda, init } from './db';
+import { addMessage, addWinner, enterGame, getLastMessage, getLastPda, getLastWinners, init } from './db';
 import {
     Connection,
     PartiallyDecodedInstruction,
@@ -9,7 +9,8 @@ import {
     Keypair,
     PublicKey,
     SystemProgram,
-    Transaction
+    Transaction,
+    LAMPORTS_PER_SOL
 } from '@solana/web3.js';
 import { bs58 } from '@project-serum/anchor/dist/cjs/utils/bytes';
 import { createGame } from './db';
@@ -63,6 +64,18 @@ export const getLastMsgIx = async (
         return false;
     }
 }
+
+export const getLastWinnerIx = async (
+    ) => {
+        try {
+            init();
+            const result = await getLastWinners();
+            return result;
+        } catch (e) {
+            console.log(e, " : error from add Msg")
+            return false;
+        }
+    }
 export const addMessageIx = async (
     user_name: string,
     msg: string
@@ -76,6 +89,29 @@ export const addMessageIx = async (
         return false;
     }
 }
+
+
+export const addWinnerIx = async (
+    user_name: string,
+    bet_amount: number,
+    payout: number,
+    tx: string
+) => {
+    try {
+        init();
+        const result = await addWinner(
+            user_name,
+            bet_amount,
+            payout,
+            tx
+        );
+        return result;
+    } catch (e) {
+        console.log(e, " : error from add Winner")
+        return false;
+    }
+}
+
 
 
 export const performTx = async (
@@ -115,7 +151,7 @@ export const performTx = async (
 
 export const getDataFromSignature = async (sig: string) => {
     try {
-        let tx = await solConnection.getParsedTransaction(sig, 'finalized');
+        let tx = await solConnection.getParsedTransaction(sig, 'confirmed');
         if (tx && !tx.meta.err) {
     
             let length = tx.transaction.message.instructions.length;
@@ -210,15 +246,26 @@ export const getDataFromSignature = async (sig: string) => {
 }
 
 export const claimReward = async (pda: PublicKey, io: Server) => {
-    const tx = await createClaimRewardTx(wallet.publicKey, pda, io);
-    const txId = await newProvider.sendAndConfirm(tx, [], { commitment: "confirmed" });
+    const winnerResult = await getLastWinners();
+    const result = await createClaimRewardTx(wallet.publicKey, pda);
+    const txId = await newProvider.sendAndConfirm(result.tx, [], { commitment: "confirmed" });
     console.log("Signature:", txId);
+
+    await addWinnerIx(result.user, result.bet, result.payout, txId);
+
+    io.emit("gameEnded", {
+        winner: result.user,
+        bet: result.bet,
+        payout: result.payout,
+        ts: txId,
+        resultHeight: result.resultHeight,
+        lastLogs: winnerResult
+    });
 }
 
 export const createClaimRewardTx = async (
     userAddress: PublicKey,
     gamePool: PublicKey,
-    io: Server
 ) => {
 
     const [solVault, bump] = await PublicKey.findProgramAddress(
@@ -242,11 +289,7 @@ export const createClaimRewardTx = async (
         }
     }
     if (valid != 1) return;
-    io.emit("gameEnded", {
-        winner: state.entrants[index].toBase58(),
-        resultHeight: randPosition / totalDeposit
-    }
-    );
+    
     const tx = new Transaction();
 
     tx.add(program.instruction.claimReward(
@@ -262,7 +305,13 @@ export const createClaimRewardTx = async (
         signers: [],
     }));
 
-    return tx;
+    return {
+        tx: tx,
+        payout: totalDeposit/LAMPORTS_PER_SOL,
+        bet: state.depositAmounts[index].toNumber()/LAMPORTS_PER_SOL,
+        user: state.entrants[index].toBase58(),
+        resultHeight: randPosition / totalDeposit
+    };
 
 }
 
