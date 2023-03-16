@@ -5,6 +5,7 @@ import { claimReward, getResult } from "./script";
 import { PublicKey } from "@solana/web3.js";
 import { Server } from "socket.io";
 import { FIRST_COOLDOWN, NEXT_COOLDOWN } from "../config";
+import { winnerModel } from "./model/winner_pool";
 
 require('dotenv').config("../.env");
 const DB_CONNECTION = process.env.DB_CONNECTION;
@@ -66,6 +67,41 @@ export const addMessage = async (
       user_name: user_name,
       message: msg,
       timestamp: ts
+    });
+
+    newData.save(function (err, book) {
+      if (err) return console.error(err);
+      console.log(newData, "Saved Successful");
+    })
+  } catch (error) {
+    console.log('error in add message!')
+  }
+
+}
+
+
+export const getLastWinners = async () => {
+  try {
+    const item = await winnerModel.find().sort({ _id: -1 }).limit(50);
+    return item;
+  } catch (error) {
+    console.log('error in getLastMessage!');
+  }
+}
+
+export const addWinner = async (
+  user_name: string,
+  bet_amount: number,
+  payout: number,
+  tx: string
+) => {
+  try {
+
+    const newData = new winnerModel({
+      user: user_name,
+      bet_amount: bet_amount,
+      payout: payout,
+      tx: tx
     });
 
     newData.save(function (err, book) {
