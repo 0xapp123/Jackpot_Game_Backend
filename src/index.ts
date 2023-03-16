@@ -118,6 +118,20 @@ app.get('/getTotalSum', async (req, res) => {
   }
 })
 
+app.get('/getWinners', async (req, res) => {
+  try {
+    let result = await getLastWinnerIx();
+
+    res.send(JSON.stringify(result ? result : -200));
+    return
+
+  } catch (e) {
+    console.log(e, ">> error occured from receiving deposit request");
+    res.send(JSON.stringify(-1));
+    return
+  }
+})
+
 app.post('/createGame', async (req, res) => {
   try {
     const txId = req.body.txId as string;
