@@ -1,7 +1,7 @@
 
 import * as anchor from '@project-serum/anchor';
 import { Program, Wallet, web3 } from '@project-serum/anchor';
-import { addMessage, addWinner, enterGame, getLastMessage, getLastPda, getLastWinners, init } from './db';
+import { addMessage, addWinner, enterGame, getLastMessage, getLastPda, getLastWinners, getTimes, getTotalSum, init } from './db';
 import {
     Connection,
     PartiallyDecodedInstruction,
@@ -66,16 +66,41 @@ export const getLastMsgIx = async (
 }
 
 export const getLastWinnerIx = async (
-    ) => {
-        try {
-            init();
-            const result = await getLastWinners();
-            return result;
-        } catch (e) {
-            console.log(e, " : error from add Msg")
-            return false;
-        }
+) => {
+    try {
+        init();
+        const result = await getLastWinners();
+        return result;
+    } catch (e) {
+        console.log(e, " : error from add Msg")
+        return false;
     }
+}
+
+export const getTimesIx = async (
+) => {
+    try {
+        init();
+        const result = await getTimes();
+        return result;
+    } catch (e) {
+        console.log(e, " : error from add Msg")
+        return false;
+    }
+}
+
+export const getTotalSumIx = async (
+) => {
+    try {
+        init();
+        const result = await getTotalSum();
+        
+        return result[0].total;
+    } catch (e) {
+        console.log(e, " : error from add Msg")
+        return false;
+    }
+}
 export const addMessageIx = async (
     user_name: string,
     msg: string

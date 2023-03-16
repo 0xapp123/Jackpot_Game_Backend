@@ -7,7 +7,7 @@ import {
   PublicKey
 } from '@solana/web3.js';
 import { Server } from 'socket.io';
-import { addMessageIx,  getLastMsgIx,  getLastPdaIx, getLastWinnerIx, getResult, performTx } from './script';
+import { addMessageIx,  getLastMsgIx,  getLastPdaIx, getLastWinnerIx, getResult, getTimesIx, getTotalSumIx, performTx } from './script';
 import { getLastMessage } from './db';
 
 
@@ -89,9 +89,23 @@ app.get('/getMessage', async (req, res) => {
   }
 })
 
-app.get('/getWinners', async (req, res) => {
+app.get('/getTimes', async (req, res) => {
   try {
-    let result = await getLastWinnerIx();
+    let result = await getTimesIx();
+
+    res.send(JSON.stringify(result ? result : -200));
+    return
+
+  } catch (e) {
+    console.log(e, ">> error occured from receiving deposit request");
+    res.send(JSON.stringify(-1));
+    return
+  }
+})
+
+app.get('/getTotalSum', async (req, res) => {
+  try {
+    let result = await getTotalSumIx();
 
     res.send(JSON.stringify(result ? result : -200));
     return

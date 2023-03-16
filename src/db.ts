@@ -85,7 +85,29 @@ export const getLastWinners = async () => {
     const item = await winnerModel.find().sort({ _id: -1 }).limit(50);
     return item;
   } catch (error) {
-    console.log('error in getLastMessage!');
+    console.log('error in getLastWinners!');
+  }
+}
+
+export const getTimes = async () => {
+  try {
+    const item = await winnerModel.count();
+    return item;
+  } catch (error) {
+    console.log('error in getTimes!');
+  }
+}
+
+export const getTotalSum = async () => {
+  try {
+    return winnerModel.aggregate([{
+      $group: {
+        _id: null,
+        total: {$sum: "$payout"}
+      }
+    }])
+  } catch (error) {
+    console.log('error in getTotalSum!');
   }
 }
 
