@@ -176,7 +176,7 @@ export const performTx = async (
 
 export const getDataFromSignature = async (sig: string) => {
     try {
-        let tx = await solConnection.getParsedTransaction(sig, 'confirmed');
+        let tx = await solConnection.getParsedTransaction(sig, 'finalized');
         if (tx && !tx.meta.err) {
     
             let length = tx.transaction.message.instructions.length;
