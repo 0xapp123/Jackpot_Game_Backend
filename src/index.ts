@@ -9,6 +9,7 @@ import {
 import { Server } from 'socket.io';
 import { addMessageIx,  getLastMsgIx,  getLastPdaIx, getLastWinnerIx, getResult, getTimesIx, getTotalSumIx, performTx } from './script';
 import { getLastMessage } from './db';
+import { getPendingCount, getProcessingStatus, setPendingCount, setProcessingStatus } from '../config';
 
 
 export const SOLANA_NETWORK = "https://delicate-withered-theorem.solana-devnet.quiknode.pro/0399d35b8b5de1ba358bd014f584ba88d7709bcf/";
@@ -35,12 +36,32 @@ const io = new Server(server, {
 io.on('connection', async (socket) => {
   console.log("New Connection Established,ADD SOCKET");
   counter ++;
+  socket.emit('runtimeStatusUpdated', {
+    isProcessing: getProcessingStatus(),
+    pendingCount: getPendingCount(),
+  })
   io.emit("connectionUpdated", counter);
   socket.on('disconnect', async (socket) => {
     console.log("New Connection Established, REMOVE COUTNER__");
     counter --;
     io.emit("connectionUpdated", counter);
   })
+})
+
+app.post('/requestCreate', async (req, res) => {
+  console.log('----> Request Create');
+  if (getProcessingStatus()) {
+    res.status(503).send("Already creating game. Wait for seconds");
+    return;
+  }
+  setProcessingStatus(true);
+  setPendingCount(0);
+  res.status(200).send("");
+})
+app.post('/endRequest', async (req, res) => {
+  console.log('----> End Create Request');
+  setProcessingStatus(false);
+  res.status(200).send("");
 })
 
 app.post('/writeMessage', async (req, res) => {
