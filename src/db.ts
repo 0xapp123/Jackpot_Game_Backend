@@ -4,13 +4,20 @@ import { gameModel } from "./model/game_pool";
 import { claimReward, getResult } from "./script";
 import { PublicKey } from "@solana/web3.js";
 import { Server } from "socket.io";
-import { FIRST_COOLDOWN, NEXT_COOLDOWN } from "../config";
+import {
+  FIRST_COOLDOWN,
+  getPendingCount,
+  NEXT_COOLDOWN,
+  setProcessingStatus,
+} from "../config";
 import { winnerModel } from "./model/winner_pool";
 
-require('dotenv').config("../.env");
+require("dotenv").config("../.env");
 const DB_CONNECTION = process.env.DB_CONNECTION;
 let endTimer: NodeJS.Timeout;
 let newTimer: NodeJS.Timeout;
+let endInterval: NodeJS.Timeout | undefined = undefined;
+let newInterval: NodeJS.Timeout | undefined = undefined;
 
 export const init = () => {
   if (DB_CONNECTION === undefined) return;
@@ -22,94 +29,90 @@ export const init = () => {
     .catch((e) => {
       console.error(`mongodb error ${e}`);
     });
-}
+};
 
 export const getLastPda = async () => {
   try {
     const item = await gameModel.find().sort({ _id: -1 });
-    if (new Date().getTime() >= item[0].end_timestamp){
+    if (new Date().getTime() >= item[0].end_timestamp) {
       return {
         pda: "",
-        endTime: -1 
-      }
+        endTime: -1,
+      };
     } else {
       return {
         pda: item[0].game_pool,
-        endTime: item[0].end_timestamp
-      }
+        endTime: item[0].end_timestamp,
+      };
     }
   } catch (error) {
-    console.log('error in getLastPda');
+    console.log("error in getLastPda");
     return {
       pda: "",
-      endTime: -1 
-    }
+      endTime: -1,
+    };
   }
-
-}
+};
 
 export const getLastMessage = async () => {
   try {
     const item = await msgModel.find().sort({ _id: -1 }).limit(50);
     return item;
   } catch (error) {
-    console.log('error in getLastMessage!');
+    console.log("error in getLastMessage!");
   }
-}
-export const addMessage = async (
-  user_name: string,
-  msg: string,
-) => {
+};
+export const addMessage = async (user_name: string, msg: string) => {
   try {
     let ts = new Date();
 
     const newData = new msgModel({
       user_name: user_name,
       message: msg,
-      timestamp: ts
+      timestamp: ts,
     });
 
     newData.save(function (err, book) {
       if (err) return console.error(err);
       console.log(newData, "Saved Successful");
-    })
+    });
   } catch (error) {
-    console.log('error in add message!')
+    console.log("error in add message!");
   }
-
-}
-
+};
 
 export const getLastWinners = async () => {
   try {
     const item = await winnerModel.find().sort({ _id: -1 }).limit(50);
     return item;
   } catch (error) {
-    console.log('error in getLastWinners!');
+    console.log("error in getLastWinners!");
   }
-}
+};
 
 export const getTimes = async () => {
   try {
     const item = await winnerModel.count();
     return item;
   } catch (error) {
-    console.log('error in getTimes!');
+    console.log("error in getTimes!");
   }
-}
+};
 
 export const getTotalSum = async () => {
   try {
-    return winnerModel.aggregate([{
-      $group: {
-        _id: null,
-        total: {$sum: "$payout"}
-      }
-    }])
+    return winnerModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$payout" },
+        },
+      },
+    ]);
   } catch (error) {
-    console.log('error in getTotalSum!');
+    console.log("error in getTotalSum!");
   }
-}
+};
 
 export const addWinner = async (
   user_name: string,
@@ -118,23 +121,21 @@ export const addWinner = async (
   tx: string
 ) => {
   try {
-
     const newData = new winnerModel({
       user: user_name,
       bet_amount: bet_amount,
       payout: payout,
-      tx: tx
+      tx: tx,
     });
 
     newData.save(function (err, book) {
       if (err) return console.error(err);
       console.log(newData, "Saved Successful");
-    })
+    });
   } catch (error) {
-    console.log('error in add message!')
+    console.log("error in add message!");
   }
-
-}
+};
 
 export const createGame = async (
   startTimestamp: number,
@@ -142,28 +143,27 @@ export const createGame = async (
   io: Server
 ) => {
   try {
-
     const newData = new gameModel({
       start_timestamp: startTimestamp,
       game_pool: gamePool,
-      entrants: 1
+      entrants: 1,
     });
 
     newData.save(function (err, book) {
       if (err) return console.error(err);
       console.log(newData, "Saved Successful");
-    })
+    });
     const gameData = {
       start_ts: startTimestamp,
-      game_pool: gamePool
-    }
+      game_pool: gamePool,
+    };
     const lresult = await getResult(new PublicKey(gamePool));
 
     io.emit("startGame", gamePool, 0, lresult);
   } catch (error) {
-    console.log('error in createGame!');
+    console.log("error in createGame!");
   }
-}
+};
 
 export const enterGame = async (
   signer: string,
@@ -184,17 +184,17 @@ export const enterGame = async (
     }
 
     if (fresult.length === 1 && signer === fresult[0].player) {
-      last_ts = 0
-    } 
+      last_ts = 0;
+    }
 
     const update = {
       end_timestamp: last_ts,
-      entrants: 2
-    }
+      entrants: 2,
+    };
 
     if (!(fresult.length === 1 && signer === fresult[0].player)) {
       await gameModel.findOneAndUpdate(filter, update, {
-        new: true
+        new: true,
       });
       console.log("Write data on DB");
     }
@@ -202,27 +202,61 @@ export const enterGame = async (
     if (last_ts != 0) {
       clearTimeout(endTimer);
       clearTimeout(newTimer);
+      if (endInterval) {
+        clearInterval(endInterval);
+        endInterval = undefined;
+      }
+      if (newInterval) {
+        clearInterval(newInterval);
+        newInterval = undefined;
+      }
 
       let timer = setTimeout(async () => {
-        console.log("Claim Reward")
-        await claimReward(new PublicKey(gamePool), io)
+        if (getPendingCount() === 0) {
+          console.log("Claim Reward");
+          setProcessingStatus(true);
+          await claimReward(new PublicKey(gamePool), io);
+          setProcessingStatus(false);
+        } else {
+          setProcessingStatus(true);
+          endInterval = setInterval(async () => {
+            console.log("---> pending claim reward");
+            if (getPendingCount() === 0) {
+              console.log("Claim Reward");
+              clearInterval(endInterval);
+              endInterval = undefined;
+              console.log("--> claim Tx");
+              await claimReward(new PublicKey(gamePool), io);
+              setProcessingStatus(false);
+            }
+          }, 1000);
+        }
       }, last_ts - new Date().getTime());
 
       let timerNew = setTimeout(async () => {
-        console.log("New GAME DATA")
-        io.emit("newGameReady", 0 , [])
+        if (getPendingCount() === 0) {
+          console.log("New GAME DATA");
+          io.emit("newGameReady", 0, []);
+        } else {
+          newInterval = setInterval(async () => {
+            console.log("---> pending new game ready");
+            if (getPendingCount() === 0) {
+              console.log("New GAME DATA");
+              io.emit("newGameReady", 0, []);
+              clearInterval(newInterval);
+              newInterval = undefined;
+            }
+          }, 1000);
+        }
       }, last_ts - new Date().getTime() + 6000);
 
       newTimer = timerNew;
       endTimer = timer;
-
     }
     const lresult = await getResult(new PublicKey(gamePool));
 
     io.emit("endTimeUpdated", gamePool, last_ts, lresult);
-
-
   } catch (error) {
-    console.log('error in enterGame!')
+    console.log("error in enterGame!");
   }
-}
+};

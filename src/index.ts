@@ -1,18 +1,31 @@
-import express from 'express';
-import http from 'http';
-import bodyParser from 'body-parser';
-import cors from 'cors';
+import express from "express";
+import http from "http";
+import bodyParser from "body-parser";
+import cors from "cors";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { Server } from "socket.io";
 import {
-  Connection,
-  PublicKey
-} from '@solana/web3.js';
-import { Server } from 'socket.io';
-import { addMessageIx,  getLastMsgIx,  getLastPdaIx, getLastWinnerIx, getResult, getTimesIx, getTotalSumIx, performTx } from './script';
-import { getLastMessage } from './db';
-import { getPendingCount, getProcessingStatus, setPendingCount, setProcessingStatus } from '../config';
+  addMessageIx,
+  getLastMsgIx,
+  getLastPdaIx,
+  getLastWinnerIx,
+  getResult,
+  getTimesIx,
+  getTotalSumIx,
+  performTx,
+} from "./script";
+import { getLastMessage } from "./db";
+import {
+  decreasePendingCount,
+  getPendingCount,
+  getProcessingStatus,
+  increasePendingCount,
+  resetPendingCount,
+  setProcessingStatus,
+} from "../config";
 
-
-export const SOLANA_NETWORK = "https://delicate-withered-theorem.solana-devnet.quiknode.pro/0399d35b8b5de1ba358bd014f584ba88d7709bcf/";
+export const SOLANA_NETWORK =
+  "https://delicate-withered-theorem.solana-devnet.quiknode.pro/0399d35b8b5de1ba358bd014f584ba88d7709bcf/";
 export const solConnection = new Connection(SOLANA_NETWORK, "confirmed");
 export const PROGRAM_ID = "E13jNxzoQbUuyaZ9rYJUdRAirYZKU75NJNRV9CHdDhHE";
 
@@ -28,43 +41,52 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST"],
   },
-
 });
 
-io.on('connection', async (socket) => {
+io.on("connection", async (socket) => {
   console.log("New Connection Established,ADD SOCKET");
-  counter ++;
-  socket.emit('runtimeStatusUpdated', {
-    isProcessing: getProcessingStatus(),
-    pendingCount: getPendingCount(),
-  })
+  counter++;
   io.emit("connectionUpdated", counter);
-  socket.on('disconnect', async (socket) => {
+  socket.on("disconnect", async (socket) => {
     console.log("New Connection Established, REMOVE COUTNER__");
-    counter --;
+    counter--;
     io.emit("connectionUpdated", counter);
-  })
-})
+  });
+});
 
-app.post('/requestCreate', async (req, res) => {
-  console.log('----> Request Create');
+app.post("/requestCreate", async (req, res) => {
+  console.log("----> Request Create");
   if (getProcessingStatus()) {
     res.status(503).send("Already creating game. Wait for seconds");
     return;
   }
   setProcessingStatus(true);
-  setPendingCount(0);
+  resetPendingCount();
   res.status(200).send("");
-})
-app.post('/endRequest', async (req, res) => {
-  console.log('----> End Create Request');
+});
+app.post("/endRequest", async (req, res) => {
+  console.log("----> End Create Request");
   setProcessingStatus(false);
   res.status(200).send("");
-})
+});
+app.post("/requestEnter", async (req, res) => {
+  console.log("----> Request Enter");
+  if (getProcessingStatus()) {
+    res.status(503).send("Already finishing game. Wait for next round");
+    return;
+  }
+  increasePendingCount();
+  res.status(200).send("");
+});
+app.post("/endEnterRequest", async (req, res) => {
+  console.log("----> End Enter Request");
+  decreasePendingCount();
+  res.status(200).send("");
+});
 
-app.post('/writeMessage', async (req, res) => {
+app.post("/writeMessage", async (req, res) => {
   try {
     let user = req.body.user as string;
     let msg = req.body.msg as string;
@@ -75,130 +97,121 @@ app.post('/writeMessage', async (req, res) => {
     if (!result) result = [];
     let midResult = await addMessageIx(user, msg);
     let newMsg;
-    if (!midResult){
+    if (!midResult) {
       newMsg = {
-        user_name:user,
+        user_name: user,
         message: msg,
         timestamp: ts,
       };
     }
-    conq = [newMsg??newMsg, ...result];
+    conq = [newMsg ?? newMsg, ...result];
 
     // send data with socket
     io.emit("chatUpdated", conq);
 
     res.send(JSON.stringify(conq ? conq : -200));
-    return
-
+    return;
   } catch (e) {
     console.log(e, ">> error occured from receiving deposit request");
     res.send(JSON.stringify(-1));
-    return
+    return;
   }
-})
+});
 
-app.get('/getMessage', async (req, res) => {
+app.get("/getMessage", async (req, res) => {
   try {
     let result = await getLastMsgIx();
 
     res.send(JSON.stringify(result ? result : -200));
-    return
-
+    return;
   } catch (e) {
     console.log(e, ">> error occured from receiving deposit request");
     res.send(JSON.stringify(-1));
-    return
+    return;
   }
-})
+});
 
-app.get('/getTimes', async (req, res) => {
+app.get("/getTimes", async (req, res) => {
   try {
     let result = await getTimesIx();
 
     res.send(JSON.stringify(result ? result : -200));
-    return
-
+    return;
   } catch (e) {
     console.log(e, ">> error occured from receiving deposit request");
     res.send(JSON.stringify(-1));
-    return
+    return;
   }
-})
+});
 
-app.get('/getTotalSum', async (req, res) => {
+app.get("/getTotalSum", async (req, res) => {
   try {
     let result = await getTotalSumIx();
 
     res.send(JSON.stringify(result ? result : -200));
-    return
-
+    return;
   } catch (e) {
     console.log(e, ">> error occured from receiving deposit request");
     res.send(JSON.stringify(-1));
-    return
+    return;
   }
-})
+});
 
-app.get('/getWinners', async (req, res) => {
+app.get("/getWinners", async (req, res) => {
   try {
     let result = await getLastWinnerIx();
 
     res.send(JSON.stringify(result ? result : -200));
-    return
-
+    return;
   } catch (e) {
     console.log(e, ">> error occured from receiving deposit request");
     res.send(JSON.stringify(-1));
-    return
+    return;
   }
-})
+});
 
-app.post('/createGame', async (req, res) => {
+app.post("/createGame", async (req, res) => {
   try {
     const txId = req.body.txId as string;
     io.emit("gameStarting", 0);
     console.log(txId);
 
     if (!txId) {
-      res.send(JSON.stringify(-100))
-      return
+      res.send(JSON.stringify(-100));
+      return;
     }
     betCounter++;
 
     const result = await performTx(txId, io);
     res.send(JSON.stringify(result ? 0 : -200));
-
   } catch (e) {
     console.log(e, ">>> Error");
     res.send(JSON.stringify(-2));
-    return
+    return;
   }
-})
+});
 
-
-app.post('/enterGame', async (req, res) => {
+app.post("/enterGame", async (req, res) => {
   try {
     const txId = req.body.txId as string;
 
     console.log(txId);
 
     if (!txId) {
-      res.send(JSON.stringify(-100))
-      return
+      res.send(JSON.stringify(-100));
+      return;
     }
     betCounter++;
     const result = await performTx(txId, io);
     res.send(JSON.stringify(result ? 0 : -200));
-
   } catch (e) {
     console.log(e, ">>> Error");
     res.send(JSON.stringify(-2));
-    return
+    return;
   }
-})
+});
 
-
-app.get('/getBetCount', async (req, res) => {
+app.get("/getBetCount", async (req, res) => {
   try {
     const result = betCounter;
 
@@ -206,39 +219,34 @@ app.get('/getBetCount', async (req, res) => {
   } catch (e) {
     console.log(e, ">>> Error");
     res.send(JSON.stringify(-2));
-    return
+    return;
   }
-})
+});
 
-
-app.get('/getRecentGame', async (req, res) => {
+app.get("/getRecentGame", async (req, res) => {
   try {
-
     const pdaData = await getLastPdaIx();
     if (!pdaData) return;
     const pdaAddress = pdaData.pda;
-    let gameData: any
+    let gameData: any;
     if (pdaData.pda != "") {
       gameData = await getResult(new PublicKey(pdaAddress));
-
     }
     const result = {
       pda: pdaData.pda,
       endTimestamp: pdaData.endTime ? pdaData.endTime : 0,
-      players: gameData
-    }
+      players: gameData,
+    };
     res.send(JSON.stringify(result ? result : -200));
   } catch (e) {
     console.log(e, ">>> Error");
     res.send(JSON.stringify(-2));
-    return
+    return;
   }
-})
-
+});
 
 server.listen(port, () => {
   console.log(`server is listening on ${port}`);
   // attachRewardTransactionListener(io);
   return;
 });
-
