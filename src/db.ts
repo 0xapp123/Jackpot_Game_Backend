@@ -232,6 +232,15 @@ export const enterGame = async (
               console.log("--> claim Tx");
               await claimReward(new PublicKey(gamePool), io);
               setProcessingStatus(false);
+
+              clearTimer(newTimer);
+              newTimer = setTimeout(async () => {
+                console.log("---> pending sent new game ready");
+                if (getPendingCount() === 0) {
+                  console.log("New GAME DATA");
+                  io.emit("newGameReady", 0, []);
+                }
+              }, 6000);
             }
           }, 1000);
         }
@@ -241,16 +250,6 @@ export const enterGame = async (
         if (getPendingCount() === 0) {
           console.log("New GAME DATA");
           io.emit("newGameReady", 0, []);
-        } else {
-          newInterval = setInterval(async () => {
-            console.log("---> pending new game ready");
-            if (getPendingCount() === 0) {
-              console.log("New GAME DATA");
-              io.emit("newGameReady", 0, []);
-              clearInterval(newInterval);
-              newInterval = undefined;
-            }
-          }, 1000);
         }
       }, last_ts - new Date().getTime() + 6000);
 
