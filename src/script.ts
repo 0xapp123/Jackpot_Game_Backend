@@ -326,26 +326,26 @@ export const createClaimRewardTx = async (
 
 // TODO: need to check if data correct after confirmed
 export const getResult = async (gameKey: PublicKey) => {
-  let i = 0;
-  while (i < 5) {
-    try {
-      const firstResult = await getStateByKey(gameKey);
-      // console.log("getResult", firstResult);
-      const gameInfo = [];
-      for (let i = 0; i < firstResult.entrants.length; i++) {
-        gameInfo.push({
-          player: firstResult.entrants[i].toBase58(),
-          amount: firstResult.depositAmounts[i].toNumber(),
-        });
-      }
-      return gameInfo;
-    } catch {
-      sleep(1000);
-      i++;
-      continue;
-    }
+  //   let i = 0;
+  //   while (i < 5) {
+  //     try {
+  const firstResult = await getStateByKey(gameKey);
+  // console.log("getResult", firstResult);
+  const gameInfo = [];
+  for (let i = 0; i < firstResult.entrants.length; i++) {
+    gameInfo.push({
+      player: firstResult.entrants[i].toBase58(),
+      amount: firstResult.depositAmounts[i].toNumber(),
+    });
   }
-  return [];
+  return gameInfo;
+  //     } catch {
+  //       sleep(1000);
+  //       i++;
+  //       continue;
+  //     }
+  //   }
+  //   return [];
 };
 
 export const getStateByKey = async (
