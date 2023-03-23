@@ -233,7 +233,7 @@ export const enterGame = async (
               await claimReward(new PublicKey(gamePool), io);
               setProcessingStatus(false);
 
-              clearTimer(newTimer);
+              clearTimeout(newTimer);
               newTimer = setTimeout(async () => {
                 console.log("---> pending sent new game ready");
                 if (getPendingCount() === 0) {
