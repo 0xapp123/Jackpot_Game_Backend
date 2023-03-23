@@ -328,7 +328,7 @@ export const createClaimRewardTx = async (
 export const getResult = async (gameKey: PublicKey) => {
   try {
     const firstResult = await getStateByKey(gameKey);
-    console.log("getResult", firstResult);
+    // console.log("getResult", firstResult);
     const gameInfo = [];
     for (let i = 0; i < firstResult.entrants.length; i++) {
       gameInfo.push({

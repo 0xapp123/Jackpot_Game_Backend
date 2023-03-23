@@ -231,7 +231,7 @@ app.get("/getRecentGame", async (req, res) => {
     let gameData: any;
     if (pdaData.pda != "") {
       gameData = await getResult(new PublicKey(pdaAddress));
-      console.log(" --> getRecentGame:", gameData);
+      // console.log(" --> getRecentGame:", gameData);
     }
     const result = {
       pda: pdaData.pda,
