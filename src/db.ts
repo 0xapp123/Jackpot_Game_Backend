@@ -21,6 +21,7 @@ let newInterval: NodeJS.Timeout | undefined = undefined;
 
 export const init = () => {
   if (DB_CONNECTION === undefined) return;
+  if (database.connection.readyState === database.ConnectionStates.connected) return;
   database
     .connect(DB_CONNECTION)
     .then((v) => {

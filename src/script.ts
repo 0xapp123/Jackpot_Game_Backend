@@ -144,11 +144,11 @@ export const performTx = async (
     io: Server
 ) => {
     try {
+        init();
         for (let i = 0; ; i++) {
             sleep(1000)
             let txInfo = await getDataFromSignature(txId);
             if (txInfo !== undefined) {
-                init();
                 const tp = txInfo.type;
 
                 switch (tp) {
