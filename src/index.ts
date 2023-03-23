@@ -46,11 +46,11 @@ const io = new Server(server, {
 });
 
 io.on("connection", async (socket) => {
-  console.log("New Connection Established,ADD SOCKET");
+  console.log(" --> ADD SOCKET", counter);
   counter++;
   io.emit("connectionUpdated", counter);
   socket.on("disconnect", async (socket) => {
-    console.log("New Connection Established, REMOVE COUTNER__");
+    console.log(" --> REMOVE SOCKET", counter);
     counter--;
     io.emit("connectionUpdated", counter);
   });
@@ -231,6 +231,7 @@ app.get("/getRecentGame", async (req, res) => {
     let gameData: any;
     if (pdaData.pda != "") {
       gameData = await getResult(new PublicKey(pdaAddress));
+      console.log(" --> getRecentGame:", gameData);
     }
     const result = {
       pda: pdaData.pda,

@@ -21,7 +21,8 @@ let newInterval: NodeJS.Timeout | undefined = undefined;
 
 export const init = () => {
   if (DB_CONNECTION === undefined) return;
-  if (database.connection.readyState === database.ConnectionStates.connected) return;
+  if (database.connection.readyState === database.ConnectionStates.connected)
+    return;
   database
     .connect(DB_CONNECTION)
     .then((v) => {
@@ -159,6 +160,7 @@ export const createGame = async (
       game_pool: gamePool,
     };
     const lresult = await getResult(new PublicKey(gamePool));
+    console.log(" --> startGameData:", lresult);
 
     io.emit("startGame", gamePool, 0, lresult);
   } catch (error) {
@@ -175,6 +177,7 @@ export const enterGame = async (
     const ts = new Date();
     const filter = { game_pool: gamePool };
     const fresult = await getResult(new PublicKey(gamePool));
+    console.log(" --> enterGameData:", fresult);
     const item = await gameModel.find(filter);
     let last_ts = 0;
     console.log("Get Last Timestamp ++++++");
@@ -255,6 +258,7 @@ export const enterGame = async (
       endTimer = timer;
     }
     const lresult = await getResult(new PublicKey(gamePool));
+    console.log(" --> endTimeUpdated:", lresult);
 
     io.emit("endTimeUpdated", gamePool, last_ts, lresult);
   } catch (error) {
