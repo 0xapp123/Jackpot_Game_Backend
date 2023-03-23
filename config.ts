@@ -8,7 +8,7 @@ let lastRequestedTime: number = Date.now();
 /// await setting winner if there are pending enter Transactions
 let pendingCount: number = 0;
 /// max await time for transaction confirmation
-const MAX_PENDING_AWAIT_TIME = 15;
+const MAX_PENDING_AWAIT_TIME = 15000;
 
 export const getProcessingStatus = () => {
   // reset request processing false if max pending time passed
