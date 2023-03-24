@@ -205,16 +205,20 @@ export const enterGame = async (
       last_ts = 0;
     }
 
+    let players = item[0].players ?? [];
+
+    if (!players.filter((player) => player.address === signer).length) {
+      console.log("Inserting missed player info");
+      players.push({
+        address: signer,
+        amount: parseFloat(amount),
+      });
+    }
+
     const update = {
       end_timestamp: last_ts,
       entrants: 2,
-      players: [
-        ...(item[0].players ?? []),
-        {
-          address: signer,
-          amount: parseFloat(amount),
-        },
-      ],
+      players,
     };
 
     if (!(fresult.length === 1 && signer === fresult[0].player)) {
