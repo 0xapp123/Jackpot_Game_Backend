@@ -164,6 +164,7 @@ export const createGame = async (
 
     io.emit("startGame", gamePool, 0, lresult);
   } catch (error) {
+    console.error(error);
     console.log("error in createGame!");
   }
 };
@@ -260,6 +261,7 @@ export const enterGame = async (
 
     io.emit("endTimeUpdated", gamePool, last_ts, lresult);
   } catch (error) {
+    console.error(error);
     console.log("error in enterGame!");
   }
 };
