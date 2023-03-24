@@ -164,7 +164,7 @@ export const createGame = async (
     };
     let lresult = await getResult(new PublicKey(gamePool));
     /// Input manually if can't read from PDA
-    if (!lresult)
+    if (!lresult || !lresult.length)
       lresult = [
         {
           player: signer,

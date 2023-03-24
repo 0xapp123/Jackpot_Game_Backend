@@ -337,6 +337,7 @@ export const getResult = async (gameKey: PublicKey) => {
   //     try {
   const firstResult = await getStateByKey(gameKey);
   // console.log("getResult", firstResult);
+  if (!firstResult) return [];
   const gameInfo = [];
   for (let i = 0; i < firstResult.entrants.length; i++) {
     gameInfo.push({
