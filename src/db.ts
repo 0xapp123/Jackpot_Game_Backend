@@ -246,14 +246,13 @@ export const enterGame = async (
         }
       }, last_ts - new Date().getTime());
 
-      let timerNew = setTimeout(async () => {
+      newTimer = setTimeout(async () => {
         if (getPendingCount() === 0) {
           console.log("New GAME DATA");
           io.emit("newGameReady", 0, []);
         }
       }, last_ts - new Date().getTime() + 6000);
 
-      newTimer = timerNew;
       endTimer = timer;
     }
     const lresult = await getResult(new PublicKey(gamePool));

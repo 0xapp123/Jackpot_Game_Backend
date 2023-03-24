@@ -253,23 +253,22 @@ export const getDataFromSignature = async (sig: string) => {
 
 // TODO: need to check if the winner correct getting after confirmed
 export const claimReward = async (pda: PublicKey, io: Server) => {
-  const winnerResult = await getLastWinners();
+  // const winnerResult = await getLastWinners();
   const result = await createClaimRewardTx(wallet.publicKey, pda);
+  io.emit("gameEnded", {
+    winner: result.user,
+    bet: result.bet,
+    payout: result.payout,
+    // ts: txId,
+    resultHeight: result.resultHeight,
+    // lastLogs: winnerResult,
+  });
   const txId = await newProvider.sendAndConfirm(result.tx, [], {
     commitment: "confirmed",
   });
   console.log("Signature:", txId);
 
   await addWinnerIx(result.user, result.bet, result.payout, txId);
-
-  io.emit("gameEnded", {
-    winner: result.user,
-    bet: result.bet,
-    payout: result.payout,
-    ts: txId,
-    resultHeight: result.resultHeight,
-    lastLogs: winnerResult,
-  });
 };
 
 // TODO: check pda info reading step to make working with confirmatin time
