@@ -133,14 +133,21 @@ export const performTx = async (txId: string, io: Server) => {
       sleep(1000);
       let txInfo = await getDataFromSignature(txId);
       if (txInfo !== undefined) {
+        console.log("txInfo ==>", txInfo);
         const tp = txInfo.type;
 
         switch (tp) {
           case "PlayGame":
-            await createGame(txInfo.time, txInfo.gamePool, io);
+            await createGame(
+              txInfo.time,
+              txInfo.signer,
+              txInfo.amount,
+              txInfo.gamePool,
+              io
+            );
             break;
           case "EnterGame":
-            await enterGame(txInfo.signer, txInfo.gamePool, io);
+            await enterGame(txInfo.signer, txInfo.amount, txInfo.gamePool, io);
             break;
           case "ClaimReward":
             break;
@@ -200,7 +207,7 @@ export const getDataFromSignature = async (sig: string) => {
         case 1: {
           console.log("PlayGame");
           let bytes = bs58.decode(hash);
-          let b = bytes.slice(8, 16).reverse();
+          let b = bytes.slice(16, 24).reverse();
           let damount = new anchor.BN(b).toNumber().toString();
 
           result = {

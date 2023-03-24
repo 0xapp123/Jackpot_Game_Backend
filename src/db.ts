@@ -141,6 +141,8 @@ export const addWinner = async (
 
 export const createGame = async (
   startTimestamp: number,
+  signer: string,
+  amount: string,
   gamePool: string,
   io: Server
 ) => {
@@ -149,6 +151,7 @@ export const createGame = async (
       start_timestamp: startTimestamp,
       game_pool: gamePool,
       entrants: 1,
+      players: [{ address: signer, amount: parseFloat(amount) }],
     });
 
     newData.save(function (err, book) {
@@ -159,7 +162,15 @@ export const createGame = async (
       start_ts: startTimestamp,
       game_pool: gamePool,
     };
-    const lresult = await getResult(new PublicKey(gamePool));
+    let lresult = await getResult(new PublicKey(gamePool));
+    /// Input manually if can't read from PDA
+    if (!lresult)
+      lresult = [
+        {
+          player: signer,
+          amount: parseFloat(amount),
+        },
+      ];
     console.log(" --> startGameData:", lresult);
 
     io.emit("startGame", gamePool, 0, lresult);
@@ -171,6 +182,7 @@ export const createGame = async (
 
 export const enterGame = async (
   signer: string,
+  amount: string,
   gamePool: string,
   io: Server
 ) => {
@@ -195,6 +207,13 @@ export const enterGame = async (
     const update = {
       end_timestamp: last_ts,
       entrants: 2,
+      players: [
+        ...(item[0].players ?? []),
+        {
+          address: signer,
+          amount: parseFloat(amount),
+        },
+      ],
     };
 
     if (!(fresult.length === 1 && signer === fresult[0].player)) {
@@ -256,7 +275,13 @@ export const enterGame = async (
 
       endTimer = timer;
     }
-    const lresult = await getResult(new PublicKey(gamePool));
+    // const lresult = await getResult(new PublicKey(gamePool));
+    const lresult = update.players.map((player) => {
+      return {
+        player: player.address,
+        amount: player.amount,
+      };
+    });
     console.log(" --> endTimeUpdated:", lresult);
 
     io.emit("endTimeUpdated", gamePool, last_ts, lresult);
