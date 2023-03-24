@@ -5,6 +5,7 @@ import { claimReward, getResult } from "./script";
 import { PublicKey } from "@solana/web3.js";
 import { Server } from "socket.io";
 import {
+  CLEAR_COOLDOWN,
   FIRST_COOLDOWN,
   getPendingCount,
   NEXT_COOLDOWN,
@@ -260,7 +261,7 @@ export const enterGame = async (
                   console.log("New GAME DATA");
                   io.emit("newGameReady", 0, []);
                 }
-              }, 6000);
+              }, CLEAR_COOLDOWN);
             }
           }, 1000);
         }
@@ -271,7 +272,7 @@ export const enterGame = async (
           console.log("New GAME DATA");
           io.emit("newGameReady", 0, []);
         }
-      }, last_ts - new Date().getTime() + 6000);
+      }, last_ts - new Date().getTime() + CLEAR_COOLDOWN);
 
       endTimer = timer;
     }
