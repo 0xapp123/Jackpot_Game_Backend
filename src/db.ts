@@ -206,9 +206,16 @@ export const enterGame = async (
     }
 
     let players = item[0].players ?? [];
+    let updated = false;
+    for (let idx in players) {
+      if (players[idx].address === signer) {
+        players[idx].amount += parseFloat(amount);
+        updated = true;
+        break;
+      }
+    }
 
-    if (!players.filter((player) => player.address === signer).length) {
-      console.log("Inserting missed player info");
+    if (!updated) {
       players.push({
         address: signer,
         amount: parseFloat(amount),
