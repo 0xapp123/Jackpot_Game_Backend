@@ -1,6 +1,6 @@
 export const FIRST_COOLDOWN = 35000;
 export const NEXT_COOLDOWN = 6000;
-export const CLEAR_COOLDOWN = 10000;
+export const CLEAR_COOLDOWN = 13000;
 
 /// working as mutex for creating & setting winner conflicts
 let isProcessing: boolean = false;

@@ -269,7 +269,10 @@ export const enterGame = async (
               newTimer = setTimeout(async () => {
                 console.log("---> pending sent new game ready");
                 if (getPendingCount() === 0) {
-                  console.log("New GAME DATA");
+                  console.log(
+                    "New GAME DATA:",
+                    new Date().toLocaleTimeString()
+                  );
                   io.emit("newGameReady", 0, []);
                 }
               }, CLEAR_COOLDOWN);
@@ -280,7 +283,7 @@ export const enterGame = async (
 
       newTimer = setTimeout(async () => {
         if (getPendingCount() === 0) {
-          console.log("New GAME DATA");
+          console.log("New GAME DATA", new Date().toLocaleTimeString());
           io.emit("newGameReady", 0, []);
         }
       }, last_ts - new Date().getTime() + CLEAR_COOLDOWN);

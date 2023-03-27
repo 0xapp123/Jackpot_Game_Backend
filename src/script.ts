@@ -262,6 +262,7 @@ export const getDataFromSignature = async (sig: string) => {
 export const claimReward = async (pda: PublicKey, io: Server) => {
   // const winnerResult = await getLastWinners();
   const result = await createClaimRewardTx(wallet.publicKey, pda);
+  console.log("GAME ENDED:", new Date().toLocaleTimeString());
   io.emit("gameEnded", {
     winner: result.user,
     bet: result.bet,
