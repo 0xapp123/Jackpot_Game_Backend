@@ -131,7 +131,7 @@ export const performTx = async (txId: string, io: Server) => {
     init();
     console.log("awaiting for transaction confirm...", txId);
     await solConnection.confirmTransaction(txId, "confirmed");
-    for (let i = 0; ; i++) {
+    for (let i = 0; i < 5; i++) {
       sleep(1000);
       console.log("trying parse Transaction from Id...", txId);
       let txInfo = await getDataFromSignature(txId);
@@ -156,10 +156,10 @@ export const performTx = async (txId: string, io: Server) => {
             break;
         }
 
-        break;
+        return true;
       }
     }
-    return true;
+    return false;
   } catch (e) {
     console.log(e, " : error from perform");
     return false;
