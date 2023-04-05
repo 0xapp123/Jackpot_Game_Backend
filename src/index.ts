@@ -14,7 +14,7 @@ import {
   getTotalSumIx,
   performTx,
 } from "./script";
-import { getLastMessage } from "./db";
+import { getLastMessage, getLastPda } from "./db";
 import {
   decreasePendingCount,
   getPendingCount,
@@ -60,6 +60,11 @@ app.post("/requestCreate", async (req, res) => {
   console.log("----> Request Create");
   if (getProcessingStatus()) {
     res.status(503).send("Already creating game. Wait for seconds");
+    return;
+  }
+  const pdaData = await getLastPda();
+  if (pdaData.pda) {
+    res.status(503).send("Exist already created game. Try refresh and enter game");
     return;
   }
   setProcessingStatus(true);
