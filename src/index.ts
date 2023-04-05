@@ -63,6 +63,7 @@ app.post("/requestCreate", async (req, res) => {
     return;
   }
   const pdaData = await getLastPda();
+  console.log('  Last Game PDA:', pdaData?.pda);
   if (pdaData.pda) {
     res.status(503).send("Exist already created game. Try refresh and enter game");
     return;
