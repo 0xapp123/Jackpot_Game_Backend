@@ -9,6 +9,7 @@ import {
   FIRST_COOLDOWN,
   getPendingCount,
   NEXT_COOLDOWN,
+  REFUND_TIMEOUT,
   setProcessingStatus,
 } from "../config";
 import { winnerModel } from "./model/winner_pool";
@@ -17,6 +18,7 @@ require("dotenv").config("../.env");
 const DB_CONNECTION = process.env.DB_CONNECTION;
 let endTimer: NodeJS.Timeout;
 let newTimer: NodeJS.Timeout;
+let refundTimer: NodeJS.Timeout | undefined = undefined;
 let endInterval: NodeJS.Timeout | undefined = undefined;
 let newInterval: NodeJS.Timeout | undefined = undefined;
 
@@ -155,6 +157,31 @@ export const createGame = async (
       players: [{ address: signer, amount: parseFloat(amount) }],
     });
 
+    // timeout for refund
+    if (refundTimer) clearTimeout(refundTimer);
+    refundTimer = setTimeout(async () => {
+      console.log("---> refunding claim reward");
+      await claimReward(new PublicKey(gamePool), io);
+
+      clearTimeout(newTimer);
+      newTimer = setTimeout(async () => {
+        console.log("---> refunding new game ready");
+        if (getPendingCount() === 0) {
+          console.log("New GAME DATA:", new Date().toLocaleTimeString());
+          io.emit("newGameReady", 0, []);
+        }
+      }, CLEAR_COOLDOWN);
+
+      const filter = { game_pool: gamePool };
+      const update = {
+        end_timestamp: new Date().getTime(),
+      };
+      await gameModel.findOneAndUpdate(filter, update, {
+        new: true,
+      });
+      console.log(" --> save refunding data on DB");
+    }, REFUND_TIMEOUT);
+
     newData.save(function (err, book) {
       if (err) return console.error(err);
       console.log(newData, "Saved Successful");
@@ -193,6 +220,9 @@ export const enterGame = async (
     const fresult = await getResult(new PublicKey(gamePool));
     console.log(" --> enterGameData:", fresult);
     const item = await gameModel.find(filter);
+
+    if (refundTimer) clearTimeout(refundTimer);
+
     let last_ts = 0;
     console.log("Get Last Timestamp ++++++");
     if (item[0].entrants == 1) {

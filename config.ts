@@ -1,6 +1,7 @@
 export const FIRST_COOLDOWN = 35000;
 export const NEXT_COOLDOWN = 10000;
 export const CLEAR_COOLDOWN = 13000;
+export const REFUND_TIMEOUT = 240000;
 
 /// working as mutex for creating & setting winner conflicts
 let isProcessing: boolean = false;
