@@ -27,7 +27,6 @@ import {
 export const SOLANA_NETWORK =
   "https://delicate-withered-theorem.solana-devnet.quiknode.pro/0399d35b8b5de1ba358bd014f584ba88d7709bcf/";
 export const solConnection = new Connection(SOLANA_NETWORK, "confirmed");
-export const PROGRAM_ID = "E13jNxzoQbUuyaZ9rYJUdRAirYZKU75NJNRV9CHdDhHE";
 
 const app = express();
 const port = process.env.PORT || 3002;
