@@ -6,5 +6,5 @@ target
 node_modules
 test-ledger
 dist/
-*.lock
+*lock.json
 .env
