@@ -36,6 +36,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 let counter = 0;
 let betCounter = 0;
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -62,9 +63,11 @@ app.post("/requestCreate", async (req, res) => {
     return;
   }
   const pdaData = await getLastPda();
-  console.log('  Last Game PDA:', pdaData?.pda);
+  console.log("  Last Game PDA:", pdaData?.pda);
   if (pdaData.pda) {
-    res.status(503).send("Exist already created game. Try refresh and enter game");
+    res
+      .status(503)
+      .send("Exist already created game. Try refresh and enter game");
     return;
   }
   setProcessingStatus(true);
@@ -254,5 +257,9 @@ app.get("/getRecentGame", async (req, res) => {
 server.listen(port, () => {
   console.log(`server is listening on ${port}`);
   // attachRewardTransactionListener(io);
+
+  setInterval(() => {
+    io.emit("heartbeat", Date.now());
+  }, 1000);
   return;
 });
