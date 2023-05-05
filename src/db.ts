@@ -201,7 +201,7 @@ export const createGame = async (
       ];
     console.log(" --> startGameData:", lresult);
 
-    io.emit("startGame", gamePool, 0, lresult);
+    io.emit("startGame", gamePool, 0, lresult, startTimestamp);
   } catch (error) {
     console.error(error);
     console.log("error in createGame!");
