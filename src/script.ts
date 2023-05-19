@@ -126,40 +126,84 @@ export const addWinnerIx = async (
   }
 };
 
-export const performTx = async (txId: string, io: Server) => {
+export const performTx = async (txId: string, encodedTx: string, io: Server) => {
   try {
     init();
     console.log("awaiting for transaction confirm...", txId);
     await solConnection.confirmTransaction(txId, "confirmed");
-    for (let i = 0; i < 5; i++) {
-      sleep(1000);
-      console.log("trying parse Transaction from Id...", txId);
-      let txInfo = await getDataFromSignature(txId);
-      if (txInfo !== undefined) {
-        console.log("txInfo ==>", txInfo);
-        const tp = txInfo.type;
 
-        switch (tp) {
-          case "PlayGame":
-            await createGame(
-              txInfo.time,
-              txInfo.signer,
-              txInfo.amount,
-              txInfo.gamePool,
-              io
-            );
-            break;
-          case "EnterGame":
-            await enterGame(txInfo.signer, txInfo.amount, txInfo.gamePool, io);
-            break;
-          case "ClaimReward":
-            break;
+    const ts = new Date().getTime();
+    const txInfo = Transaction.from(Buffer.from(encodedTx, 'base64'));
+
+
+    let length = txInfo.instructions.length;
+    let hash = "";
+    let valid = -1;
+    let ixId = -1;
+
+    for (let i = 0; i < length; i++) {
+      for (let j = 0; j < NONCE_LIST.length; j++) {
+        hash = (
+          txInfo.instructions[
+            i
+          ] as unknown as PartiallyDecodedInstruction
+        ).data;
+        const bytes = bs58.encode(Buffer.from(hash));
+        if (hash != undefined && bytes.slice(0, 8) == NONCE_LIST[j]) {
+          valid = j;
+          break;
         }
-
-        return true;
+      }
+      if (valid > -1) {
+        ixId = i;
+        break;
       }
     }
-    return false;
+    
+
+    let result;
+
+    let signer = txInfo.instructions[ixId].keys[0].pubkey.toBase58();
+    let gamePda = txInfo.instructions[ixId].keys[1].pubkey.toBase58();
+
+    console.log("signer", signer);
+    console.log("gamePda", gamePda);
+
+    switch (valid) {
+      case 0: {
+        console.log("Initialize");
+        result = { type: "Initialize" };
+        break;
+      }
+      case 1: {
+        console.log("PlayGame");
+        let bytes = Buffer.from(hash);
+        let b = bytes.slice(16, 24).reverse();
+        let damount = new anchor.BN(b).toNumber().toString();
+
+        await createGame(
+          Math.floor(ts/1000),
+          signer,
+          damount,
+          gamePda,
+          io
+        );
+      
+        break;
+      }
+      case 2: {
+        console.log("EnterGame");
+        let bytes = Buffer.from(hash);
+        let b = bytes.slice(8, 16).reverse();
+        let damount = new anchor.BN(b).toNumber().toString();
+
+        await enterGame(signer, damount, gamePda, io);
+        
+        break;
+      }
+    }
+
+    return true;
   } catch (e) {
     console.log(e, " : error from perform");
     return false;
