@@ -181,16 +181,20 @@ app.get("/getWinners", async (req, res) => {
 app.post("/createGame", async (req, res) => {
   try {
     const txId = req.body.txId as string;
-    io.emit("gameStarting", 0);
-    console.log(txId);
-
+    const encodedTx = req.body.encodedTx as string;
+    if (!encodedTx)
+        return res.status(400).json({error: "Invalid Request"});
     if (!txId) {
       res.send(JSON.stringify(-100));
       return;
     }
+
+    io.emit("gameStarting", 0);
+    console.log(txId);
+
     betCounter++;
 
-    const result = await performTx(txId, io);
+    const result = await performTx(txId, encodedTx, io);
     res.send(JSON.stringify(result ? 0 : -200));
   } catch (e) {
     console.log(e, ">>> Error");
@@ -202,15 +206,18 @@ app.post("/createGame", async (req, res) => {
 app.post("/enterGame", async (req, res) => {
   try {
     const txId = req.body.txId as string;
+    const encodedTx = req.body.encodedTx as string;
 
     console.log(txId);
+    if (!encodedTx)
+        return res.status(400).json({error: "Invalid Request"});
 
     if (!txId) {
       res.send(JSON.stringify(-100));
       return;
     }
     betCounter++;
-    const result = await performTx(txId, io);
+    const result = await performTx(txId, encodedTx, io);
     res.send(JSON.stringify(result ? 0 : -200));
   } catch (e) {
     console.log(e, ">>> Error");
